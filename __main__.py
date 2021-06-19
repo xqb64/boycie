@@ -1,6 +1,10 @@
 import trio
 
-COMMANDER = b'adder!~adder@user/adder'
+
+COMMANDERS = [
+    'adder!~adder@user/adder',
+    'adder`!~adder@user/adder'
+]
 
 NETWORK = 'irc.libera.chat'
 PORT = 6667
@@ -8,8 +12,8 @@ NICK = 'Boycie'
 REAL_NAME = 'Boycie'
 USER_NAME = 'Boycie'
 
+
 async def say(stream, target: str, message: str) -> None:
-    print("got message: {}".format(repr(message)))
     await send(stream, "PRIVMSG %s :%s" % (target, message))
 
 async def join(stream, channel: str) -> None:
@@ -27,18 +31,18 @@ async def main() -> None:
 
     while True:
         msg = await stream.receive_some()
-        print(msg)
+        msg = msg.decode('UTF-8').strip()
 
-        if msg == b'':
+        print('Got a message: %s' % msg)
+
+        if msg == '':
             break
 
-        if msg.startswith(b'PING'):
-            reply = msg.decode('UTF-8').strip()
-            reply = reply.replace('PING', 'PONG')
+        if msg.startswith('PING'):
+            reply = msg.replace('PING', 'PONG')
             await send(stream, reply)
         
-        if msg.startswith(b':%s' % COMMANDER):
-            msg = msg.decode('UTF-8')
+        if any(msg[1:].startswith(x) for x in COMMANDERS):
             msg_from_commander = msg.split(':')
             command = msg_from_commander[-1]
 
@@ -51,4 +55,5 @@ async def main() -> None:
                 await join(stream, command[6:])
 
 
-trio.run(main)
+if __name__ == '__main__':
+    trio.run(main)
