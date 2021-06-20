@@ -35,8 +35,6 @@ async def recv_until(stream, terminator: bytes) -> bytes:
 
     return buffer
 
-
-
 async def main() -> None:
     stream = await trio.open_tcp_stream(NETWORK, PORT)
 
