@@ -13,6 +13,9 @@ REAL_NAME = 'Boycie'
 USER_NAME = 'Boycie'
 
 
+def _is_complete_msg(buffer: bytearray) -> bool:
+    return b'\r\n' in buffer
+
 async def say(stream, target: str, message: str) -> None:
     await send(stream, "PRIVMSG %s :%s" % (target, message))
 
@@ -23,26 +26,29 @@ async def send(stream, message: str) -> None:
     message = message.encode('UTF-8')
     await stream.send_all(message + b'\r\n')
 
-async def recv_until(stream, terminator: bytes) -> bytes:
-    buffer = b''
-
+async def recv_msg(stream, buffer: bytearray) -> bytes:
     while True:
-        msg = await stream.receive_some()
-        buffer += msg
-
-        if msg.endswith(terminator):
+        if _is_complete_msg(buffer):
             break
+        chunk = await stream.receive_some()
+        buffer.extend(chunk)
 
-    return buffer
+    msg_boundary = buffer.index(b'\r\n')
+    msg = buffer[:msg_boundary]
+
+    del buffer[:len(msg + b'\r\n')]
+
+    return bytes(msg)
 
 async def main() -> None:
+    buffer = bytearray()
     stream = await trio.open_tcp_stream(NETWORK, PORT)
 
     await send(stream, "NICK %s" % NICK)
     await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
 
     while True:
-        msg = await recv_until(stream, b'\r\n')
+        msg = await recv_msg(stream, buffer)
         msg = msg.decode('UTF-8').strip()
 
         print('Got a message: %s' % msg)
