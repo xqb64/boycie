@@ -23,6 +23,20 @@ async def send(stream, message: str) -> None:
     message = message.encode('UTF-8')
     await stream.send_all(message + b'\r\n')
 
+async def recv_until(stream, terminator: bytes) -> bytes:
+    buffer = b''
+
+    while True:
+        msg = await stream.receive_some()
+        buffer += msg
+
+        if msg.endswith(terminator):
+            break
+
+    return buffer
+
+
+
 async def main() -> None:
     stream = await trio.open_tcp_stream(NETWORK, PORT)
 
@@ -30,7 +44,7 @@ async def main() -> None:
     await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
 
     while True:
-        msg = await stream.receive_some()
+        msg = await recv_until(stream, b'\r\n')
         msg = msg.decode('UTF-8').strip()
 
         print('Got a message: %s' % msg)
