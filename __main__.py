@@ -12,9 +12,10 @@ NICK = 'Boycie'
 REAL_NAME = 'Boycie'
 USER_NAME = 'Boycie'
 
+TERMINATOR = b'\r\n'
 
-def _is_complete_msg(buffer: bytearray) -> bool:
-    return b'\r\n' in buffer
+def _contains_complete_msg(buffer: bytearray) -> bool:
+    return TERMINATOR in buffer
 
 async def say(stream, target: str, message: str) -> None:
     await send(stream, "PRIVMSG %s :%s" % (target, message))
@@ -24,19 +25,19 @@ async def join(stream, channel: str) -> None:
 
 async def send(stream, message: str) -> None:
     message = message.encode('UTF-8')
-    await stream.send_all(message + b'\r\n')
+    await stream.send_all(message + TERMINATOR)
 
 async def recv_msg(stream, buffer: bytearray) -> bytes:
     while True:
-        if _is_complete_msg(buffer):
+        if _contains_complete_msg(buffer):
             break
         chunk = await stream.receive_some()
         buffer.extend(chunk)
 
-    msg_boundary = buffer.index(b'\r\n')
+    msg_boundary = buffer.index(TERMINATOR)
     msg = buffer[:msg_boundary]
 
-    del buffer[:len(msg + b'\r\n')]
+    del buffer[:len(msg + TERMINATOR)]
 
     return bytes(msg)
 
