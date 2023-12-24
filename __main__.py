@@ -61,7 +61,6 @@ def prettyprint_timedelta(start: datetime.datetime, end: datetime.datetime) -> s
 
 
 def extract_possible_links(msg: str) -> list:
-    print(msg)
     links = []
     while True:
         match = re.search("(?P<url>https?://[^\s]+)", msg)
