@@ -1,7 +1,9 @@
+from pathlib import Path
 import asks
 import re
 import trio
 import datetime
+import logging
 
 COMMANDERS = ["adder!~adder@user/adder", "adder`!~adder@user/adder"]
 COMMANDS = ["!say", "!join", "!start_lesson", "!end_lesson"]
@@ -15,6 +17,21 @@ REAL_NAME = "Boycie"
 USER_NAME = "Boycie"
 
 TERMINATOR = b"\r\n"
+
+WORK_DIR = Path("/home/alex/.boycie")
+
+date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[
+        logging.FileHandler(f"{WORK_DIR}/{date}/boycie.log"),
+        logging.StreamHandler(),
+    ],
+)
+
+logger = logging.getLogger(__name__)
 
 
 def _contains_complete_msg(buffer: bytearray) -> bool:
@@ -86,15 +103,9 @@ async def download_image(link: str) -> None:
     # https://upload.wikimedia.org/wikipedia/.../440px-Transformer3d_col3.svg.png
     # into this: 440px-Transformer3d_col3.svg.png
     filename = link.split("/")[-1]
-    with open(filename, "wb") as f:
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    with open(WORK_DIR / date / filename, "wb") as f:
         f.write(response.content)
-
-
-async def download_mathpaste(link: str) -> None:
-    # need to figure out with Akuli how to download text
-    # from mathpaste, because it's not in the html when you
-    # request the page
-    pass
 
 
 async def main() -> None:
@@ -104,9 +115,12 @@ async def main() -> None:
     await send(stream, "NICK %s" % NICK)
     await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
 
+    logger.info("Connected to %s:%s" % (NETWORK, PORT))
+
     # autojoin channels, if any
     for channel in AUTOJOIN_CHANNELS:
         await join(stream, channel)
+        logger.info("Joined %s" % channel)
 
     lesson_start = None
 
@@ -119,14 +133,16 @@ async def main() -> None:
         # msg example:
         # :adder!~adder@user/adder PRIVMSG ##learnmath :!start_lesson
 
-        print(msg)
+        logger.info(msg)
 
         if msg == "":
+            logger.info("Connection closed")
             break
 
         # autoreply to pings
         if msg.startswith("PING"):
             reply = msg.replace("PING", "PONG")
+            logger.debug("PONG")
             await send(stream, reply)
 
         # if we're in a lesson, log the chat
@@ -150,14 +166,15 @@ async def main() -> None:
                 links = extract_possible_links(clean_msg)
                 for link in links:
                     if is_image(link):
+                        logger.info("Downloading image: %s" % link)
                         await download_image(link)
-                    elif is_mathpaste(link):
-                        await download_mathpaste(link)
 
         # if the message is from a commander, check if it's a command
         if any(msg[1:].startswith(x) for x in COMMANDERS):
             msg_from_commander = msg.split(":")
             command = msg_from_commander[-1]
+
+            logger.info("Message from commander: %s" % command)
 
             if command.startswith("!say"):
                 cmd = command.strip().split(" ")
@@ -169,22 +186,33 @@ async def main() -> None:
 
             elif command.startswith("!start_lesson"):
                 channel = msg.split(" ")[2]
+
                 await say(stream, channel, "starting lesson")
+
                 lesson_start = datetime.datetime.now()
                 date = datetime.datetime.now().strftime("%Y-%m-%d")
-                f = open(f"lesson_{date}.txt", "w")
+
+                (WORK_DIR / date).mkdir(exist_ok=True)
+
+                f = open(f"{WORK_DIR}/{date}/lesson.txt", "w")
+
+                logger.info("Lesson started")
 
             elif command.startswith("!end_lesson"):
                 channel = msg.split(" ")[2]
                 lesson_end = datetime.datetime.now()
+
                 await say(
                     stream,
                     channel,
                     "ending lesson: %s"
                     % prettyprint_timedelta(lesson_start, lesson_end),
                 )
+
                 f.close()
                 f = None
+
+                logger.info("Lesson ended")
 
 
 if __name__ == "__main__":
