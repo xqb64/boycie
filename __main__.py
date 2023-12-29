@@ -6,41 +6,53 @@ import datetime
 import logging
 import base64
 import os
+from dataclasses import dataclass
 
-COMMANDERS = ["adder!~adder@user/adder", "adder`!~adder@user/adder"]
-COMMANDS = ["!say", "!join", "!start_lesson", "!end_lesson"]
 
-AUTOJOIN_CHANNELS = ["##learnmath"]
+@dataclass
+class Commander:
+    nick: str
+    ident: str
+    hostname: str
+
+    def __str__(self):
+        return f"{self.nick}!{self.ident}@{self.hostname}"
+
+
+commander = Commander(nick="adder", ident="~adder", hostname="user/adder")
+
+COMMANDS: list[str] = ["!say", "!join", "!start_lesson", "!end_lesson"]
+
+AUTOJOIN_CHANNELS: list[str] = ["##learnmath"]
 
 NETWORK = "irc.libera.chat"
 PORT = 6697
-NICK = "Boycie"
+NICK = "boycie"
 REAL_NAME = "Boycie"
-USER_NAME = "Boycie"
+USER_NAME = "boycie"
 
 TERMINATOR = b"\r\n"
 
-WORK_DIR = Path("/home/alex/.boycie")
+WORKING_DIR: Path = Path.home() / ".boycie"
 
-date = datetime.datetime.now().strftime("%Y-%m-%d")
+today: str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-(WORK_DIR / date).mkdir(exist_ok=True)
+PASSWORD: str = os.environ["BOYCIE_PASSWORD"]
 
-BOYCIE_PASSWORD = os.environ["BOYCIE_PASSWORD"]
-
-credentials = f"{NICK}\0{NICK}\0{BOYCIE_PASSWORD}"
-encoded_credentials = base64.b64encode(credentials.encode()).decode()
+credentials: str = f"{NICK}\0{NICK}\0{PASSWORD}"
+encoded_credentials: str = base64.b64encode(credentials.encode()).decode()
 
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
-        logging.FileHandler(f"{WORK_DIR}/{date}/boycie.log"),
+        logging.FileHandler(f"{WORKING_DIR}/boycie.log"),
         logging.StreamHandler(),
     ],
 )
 
-logger = logging.getLogger(__name__)
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _contains_complete_msg(buffer: bytearray) -> bool:
@@ -102,10 +114,6 @@ def is_image(link: str) -> bool:
     return link.endswith(".png") or link.endswith(".jpg") or link.endswith(".jpeg")
 
 
-def is_mathpaste(link: str) -> bool:
-    return link.startswith("https://akuli.github.io/mathpaste/")
-
-
 async def download_image(link: str) -> None:
     response = await asks.get(link)
     # e.g. turn this:
@@ -113,7 +121,7 @@ async def download_image(link: str) -> None:
     # into this: 440px-Transformer3d_col3.svg.png
     filename = link.split("/")[-1]
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    with open(WORK_DIR / date / filename, "wb") as f:
+    with open(WORKING_DIR / date / filename, "wb") as f:
         f.write(response.content)
 
 
@@ -190,7 +198,7 @@ async def main() -> None:
                         await download_image(link)
 
         # if the message is from a commander, check if it's a command
-        if any(msg[1:].startswith(x) for x in COMMANDERS):
+        if msg[1:].startswith(commander.nick):
             msg_from_commander = msg.split(":")
             command = msg_from_commander[-1]
 
@@ -207,14 +215,14 @@ async def main() -> None:
             elif command.startswith("!start_lesson"):
                 channel = msg.split(" ")[2]
 
-                await say(stream, channel, "starting lesson")
+                await say(stream, channel, "ok")
 
                 lesson_start = datetime.datetime.now()
                 date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-                (WORK_DIR / date).mkdir(exist_ok=True)
+                (WORKING_DIR / date).mkdir(exist_ok=True)
 
-                f = open(f"{WORK_DIR}/{date}/lesson.txt", "w")
+                f = open(f"{WORKING_DIR}/{date}/lesson.txt", "w")
 
                 logger.info("Lesson started")
 
@@ -225,8 +233,7 @@ async def main() -> None:
                 await say(
                     stream,
                     channel,
-                    "ending lesson: %s"
-                    % prettyprint_timedelta(lesson_start, lesson_end),
+                    "ok: %s" % prettyprint_timedelta(lesson_start, lesson_end),
                 )
 
                 f.close()
