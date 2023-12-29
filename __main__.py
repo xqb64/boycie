@@ -196,7 +196,7 @@ async def main() -> None:
                         await download_image(link)
 
         # if the message is from a commander, check if it's a command
-        if msg[1:].startswith(commander.nick):
+        if msg[1:].startswith(str(commander)):
             msg_from_commander = msg.split(":")
             command = msg_from_commander[-1]
 
