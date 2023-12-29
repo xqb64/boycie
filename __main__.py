@@ -13,7 +13,7 @@ COMMANDS = ["!say", "!join", "!start_lesson", "!end_lesson"]
 AUTOJOIN_CHANNELS = ["##learnmath"]
 
 NETWORK = "irc.libera.chat"
-PORT = 6667
+PORT = 6697
 NICK = "Boycie"
 REAL_NAME = "Boycie"
 USER_NAME = "Boycie"
