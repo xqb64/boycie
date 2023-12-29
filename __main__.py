@@ -121,11 +121,6 @@ async def main() -> None:
     buffer = bytearray()
     stream = await trio.open_ssl_over_tcp_stream(NETWORK, PORT)
 
-    await send(stream, "NICK %s" % NICK)
-    await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
-
-    logger.info("Connected to %s:%s" % (NETWORK, PORT))
-
     # authenticate with SASL using a password
     await send(stream, "CAP REQ :sasl")
     await send(stream, "AUTHENTICATE PLAIN")
@@ -133,6 +128,11 @@ async def main() -> None:
         stream, "AUTHENTICATE {credentials}".format(credentials=encoded_credentials)
     )
     await send(stream, "CAP END")
+
+    await send(stream, "NICK %s" % NICK)
+    await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
+
+    logger.info("Connected to %s:%s" % (NETWORK, PORT))
 
     # autojoin channels, if any
     for channel in AUTOJOIN_CHANNELS:
