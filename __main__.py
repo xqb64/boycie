@@ -22,6 +22,8 @@ WORK_DIR = Path("/home/alex/.boycie")
 
 date = datetime.datetime.now().strftime("%Y-%m-%d")
 
+(WORK_DIR / date).mkdir(exist_ok=True)
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(message)s",
