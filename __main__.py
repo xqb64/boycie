@@ -33,7 +33,7 @@ USER_NAME = "boycie"
 
 TERMINATOR = b"\r\n"
 
-WORKING_DIR: Path = Path.home() / ".boycie"
+WORKING_DIR: Path = Path("/home") / "alex" / ".boycie"
 
 today: str = datetime.datetime.now().strftime("%Y-%m-%d")
 
