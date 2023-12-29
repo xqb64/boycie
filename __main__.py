@@ -35,8 +35,6 @@ TERMINATOR = b"\r\n"
 
 WORKING_DIR: Path = Path("/home") / "alex" / ".boycie"
 
-today: str = datetime.datetime.now().strftime("%Y-%m-%d")
-
 PASSWORD: str = os.environ["BOYCIE_PASSWORD"]
 
 credentials: str = f"{NICK}\0{NICK}\0{PASSWORD}"
