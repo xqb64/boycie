@@ -11,7 +11,7 @@ COMMANDS = ["!say", "!join", "!start_lesson", "!end_lesson"]
 AUTOJOIN_CHANNELS = ["##learnmath"]
 
 NETWORK = "irc.libera.chat"
-PORT = 6667
+PORT = 6697
 NICK = "Boycie"
 REAL_NAME = "Boycie"
 USER_NAME = "Boycie"
@@ -112,7 +112,7 @@ async def download_image(link: str) -> None:
 
 async def main() -> None:
     buffer = bytearray()
-    stream = await trio.open_tcp_stream(NETWORK, PORT)
+    stream = await trio.open_ssl_over_tcp_stream(NETWORK, PORT)
 
     await send(stream, "NICK %s" % NICK)
     await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
