@@ -4,6 +4,8 @@ import re
 import trio
 import datetime
 import logging
+import base64
+import os
 
 COMMANDERS = ["adder!~adder@user/adder", "adder`!~adder@user/adder"]
 COMMANDS = ["!say", "!join", "!start_lesson", "!end_lesson"]
@@ -23,6 +25,11 @@ WORK_DIR = Path("/home/alex/.boycie")
 date = datetime.datetime.now().strftime("%Y-%m-%d")
 
 (WORK_DIR / date).mkdir(exist_ok=True)
+
+BOYCIE_PASSWORD = os.environ["BOYCIE_PASSWORD"]
+
+credentials = f"{NICK}\0{NICK}\0{BOYCIE_PASSWORD}"
+encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -118,6 +125,14 @@ async def main() -> None:
     await send(stream, "USER %s * 0: %s" % (USER_NAME, REAL_NAME))
 
     logger.info("Connected to %s:%s" % (NETWORK, PORT))
+
+    # authenticate with SASL using a password
+    await send(stream, "CAP REQ :sasl")
+    await send(stream, "AUTHENTICATE PLAIN")
+    await send(
+        stream, "AUTHENTICATE {credentials}".format(credentials=encoded_credentials)
+    )
+    await send(stream, "CAP END")
 
     # autojoin channels, if any
     for channel in AUTOJOIN_CHANNELS:
