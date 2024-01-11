@@ -179,7 +179,7 @@ async def main() -> None:
             user = split[0].lstrip(":").split("!")[0]
             # user: adder
 
-            clean_msg = ":".join(split[1:])
+            clean_msg = " :".join(split[1:])
             # clean_msg: !start_lesson
 
             if not is_command(clean_msg):
