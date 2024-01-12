@@ -173,13 +173,13 @@ async def main() -> None:
 
         # if we're in a lesson, log the chat
         if f is not None:
-            split = msg.split(" :")
+            split = msg.split(" :", maxsplit=1)
             # split: [':adder!~adder@user/adder PRIVMSG ##learnmath', '!start_lesson']
 
             user = split[0].lstrip(":").split("!")[0]
             # user: adder
 
-            clean_msg = " :".join(split[1:])
+            clean_msg = split[-1]
             # clean_msg: !start_lesson
 
             if not is_command(clean_msg):
