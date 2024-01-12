@@ -171,6 +171,8 @@ async def main() -> None:
             logger.debug("PONG")
             await send(stream, reply)
 
+            continue
+
         # if we're in a lesson, log the chat
         if f is not None:
             split = msg.split(" :", maxsplit=1)
