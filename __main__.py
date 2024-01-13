@@ -112,14 +112,13 @@ def is_image(link: str) -> bool:
     return link.endswith(".png") or link.endswith(".jpg") or link.endswith(".jpeg")
 
 
-async def download_image(link: str) -> None:
+async def download_image(link: str, path: str) -> None:
     response = await asks.get(link)
     # e.g. turn this:
     # https://upload.wikimedia.org/wikipedia/.../440px-Transformer3d_col3.svg.png
     # into this: 440px-Transformer3d_col3.svg.png
     filename = link.split("/")[-1]
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    with open(WORKING_DIR / date / filename, "wb") as f:
+    with open(path, "wb") as f:
         f.write(response.content)
 
 
@@ -149,6 +148,7 @@ async def main() -> None:
         logger.info("Joined %s" % channel)
 
     lesson_start = None
+    date = None
 
     f = None
 
@@ -195,7 +195,7 @@ async def main() -> None:
                 for link in links:
                     if is_image(link):
                         logger.info("Downloading image: %s" % link)
-                        await download_image(link)
+                        await download_image(link, date)
 
         # if the message is from a commander, check if it's a command
         if msg[1:].startswith(str(commander)):
@@ -218,7 +218,7 @@ async def main() -> None:
                 await say(stream, channel, "ok")
 
                 lesson_start = datetime.datetime.now()
-                date = datetime.datetime.now().strftime("%Y-%m-%d")
+                date = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
 
                 (WORKING_DIR / date).mkdir(exist_ok=True)
 
@@ -238,6 +238,8 @@ async def main() -> None:
 
                 f.close()
                 f = None
+
+                date = None
 
                 logger.info("Lesson ended")
 
