@@ -118,7 +118,7 @@ async def download_image(link: str, path: str) -> None:
     # https://upload.wikimedia.org/wikipedia/.../440px-Transformer3d_col3.svg.png
     # into this: 440px-Transformer3d_col3.svg.png
     filename = link.split("/")[-1]
-    with open(path, "wb") as f:
+    with open(Path(path) / filename, "wb") as f:
         f.write(response.content)
 
 
