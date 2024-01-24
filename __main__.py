@@ -201,8 +201,11 @@ async def main() -> None:
                         try:
                             await download_image(link, date)
                         except asks.errors.RequestTimeout:
+                            channel = msg.split(" ")[2]
                             logger.info("Downloading image failed: %s" % link)
-                            await say("Downloading image failed: %s" % link)
+                            await say(
+                                stream, channel, "Downloading image failed: %s" % link
+                            )
 
                             continue
 
