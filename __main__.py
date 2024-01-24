@@ -200,7 +200,7 @@ async def main() -> None:
                         logger.info("Downloading image: %s" % link)
                         try:
                             await download_image(link, date)
-                        except asks.error.RequestTimeout:
+                        except asks.errors.RequestTimeout:
                             logger.info("Downloading image failed: %s" % link)
                             await say("Downloading image failed: %s" % link)
 
