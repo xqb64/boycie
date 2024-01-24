@@ -195,7 +195,10 @@ async def main() -> None:
                 for link in links:
                     if is_image(link):
                         logger.info("Downloading image: %s" % link)
-                        await download_image(link, date)
+                        try:
+                            await download_image(link, date)
+                        except:
+                            pass
 
         # if the message is from a commander, check if it's a command
         if msg[1:].startswith(str(commander)):
