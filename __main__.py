@@ -113,7 +113,7 @@ def is_image(link: str) -> bool:
 
 
 async def download_image(link: str, path: str) -> None:
-    response = await asks.get(link)
+    response = await asks.get(link, timeout=1)
     # e.g. turn this:
     # https://upload.wikimedia.org/wikipedia/.../440px-Transformer3d_col3.svg.png
     # into this: 440px-Transformer3d_col3.svg.png
