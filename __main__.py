@@ -113,7 +113,10 @@ def is_image(link: str) -> bool:
 
 
 async def download_image(link: str, path: str) -> None:
-    response = await asks.get(link, timeout=1)
+    try:
+        response = await asks.get(link, timeout=1)
+    except asks.errors.RequestTimeout:
+        raise
     # e.g. turn this:
     # https://upload.wikimedia.org/wikipedia/.../440px-Transformer3d_col3.svg.png
     # into this: 440px-Transformer3d_col3.svg.png
@@ -195,7 +198,13 @@ async def main() -> None:
                 for link in links:
                     if is_image(link):
                         logger.info("Downloading image: %s" % link)
-                        await download_image(link, date)
+                        try:
+                            await download_image(link, date)
+                        except asks.error.RequestTimeout:
+                            logger.info("Downloading image failed: %s" % link)
+                            await say("Downloading image failed: %s" % link)
+
+                            continue
 
         # if the message is from a commander, check if it's a command
         if msg[1:].startswith(str(commander)):
